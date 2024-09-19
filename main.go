@@ -29,16 +29,27 @@ func main() {
 		fmt.Println(line)
 	}*/
 	p := make([]byte, 1)
-	file.Read(p)
-	fmt.Print(p)
-	file.Read(p)
-	fmt.Print(p)
-	file.Read(p)
-	fmt.Print(p)
-	file.Read(p)
-	fmt.Print(p)
-	file.Read(p)
-	fmt.Println(p)
+	for {
+		_, err := file.Read(p)
+		if p[0] == byte(10) || p[0] == byte(13) || p[0] == byte(9) {
+			fmt.Println(p)
+		} else {
+			fmt.Print(p)
+		}
+		if err != nil {
+			break
+		}
+	}
+	// file.Read(p)
+	// fmt.Print(p)
+	// file.Read(p)
+	// fmt.Print(p)
+	// file.Read(p)
+	// fmt.Print(p)
+	// file.Read(p)
+	// fmt.Print(p)
+	// file.Read(p)
+	// fmt.Println(p)
 
 	// r := strings.NewReader("Hello, Reader!")
 
