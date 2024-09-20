@@ -49,7 +49,11 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 }
 
 func (p CSVStruct) GetField(n int) (string, error) {
-	return "", ErrQuote
+	if n < 0 || n > len(p.line) {
+		return "", ErrFieldCount
+	}
+
+	return p.line[n], nil
 }
 
 func (p CSVStruct) GetNumberOfFields() int {
