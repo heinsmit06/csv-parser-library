@@ -1,8 +1,8 @@
 package main
 
 import (
-	"a-library-for-others/parsers"
 	"fmt"
+	"io"
 	"os"
 )
 
@@ -14,9 +14,9 @@ func main() {
 	}
 	defer file.Close()
 
-	/*var csvparser parsers.CSVParser = &parsers.CSVStruct{}
-	describe(csvparser)
+	var csvparser CSVParser = &CSVStruct{}
 
+	lineCount := 1
 	for {
 		line, err := csvparser.ReadLine(file)
 		if err != nil {
@@ -26,44 +26,12 @@ func main() {
 			fmt.Println("Error reading line:", err)
 			return
 		}
-		fmt.Println(line)
-	}*/
-	p := make([]byte, 1)
-	for {
-		_, err := file.Read(p)
-		if p[0] == byte(10) || p[0] == byte(13) || p[0] == byte(9) {
-			fmt.Println(p)
-		} else {
-			fmt.Print(p)
-		}
-		if err != nil {
-			break
-		}
+		fmt.Printf("Line %v: %v\n", lineCount, line)
+		fmt.Println("  ---------------  ")
+		lineCount++
 	}
-	// file.Read(p)
-	// fmt.Print(p)
-	// file.Read(p)
-	// fmt.Print(p)
-	// file.Read(p)
-	// fmt.Print(p)
-	// file.Read(p)
-	// fmt.Print(p)
-	// file.Read(p)
-	// fmt.Println(p)
-
-	// r := strings.NewReader("Hello, Reader!")
-
-	// b := make([]byte, 3)
-	// for {
-	// 	n, err := r.Read(b)
-	// 	fmt.Printf("n = %v err = %v b = %v\n", n, err, b)
-	// 	fmt.Printf("b[:n] = %q\n", b[:n])
-	// 	if err == io.EOF {
-	// 		break
-	// 	}
-	// }
 }
 
-func describe(i parsers.CSVParser) {
+func describe(i CSVParser) {
 	fmt.Printf("(%v, %T)\n", i, i)
 }
