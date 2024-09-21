@@ -19,32 +19,59 @@ var (
 type CSVStruct struct {
 	fieldInBytes []byte
 	line         []string
+	previousByte byte
 }
 
 func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 	b := make([]byte, 1) // to read one byte at a time
 	var err error
 	p.line = []string{}
+	firstByteIsQuote := false
 
 	for {
 		_, err = r.Read(b)
 		if err == io.EOF {
-			return "", err
+			return "", io.EOF
+		}
+
+		if firstByteIsQuote {
+			// the field starting with a quote is finalized only if
+			// the previous byte is '"' and the current byte is ',' and there is even number of '"'
+			if b[0] == ',' && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 0 {
+				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
+				p.fieldInBytes = []byte{}
+				firstByteIsQuote = false
+				continue
+			}
+		} else {
+			if b[0] == ',' {
+				if countQuotesInField(p.fieldInBytes) > 0 {
+					p.fieldInBytes = []byte{}
+					return "", ErrQuote
+				}
+				p.line = append(p.line, string(p.fieldInBytes))
+				p.fieldInBytes = []byte{}
+				continue
+			}
 		}
 
 		if lineIsTerminated(b[0]) {
-			p.line = append(p.line, string(p.fieldInBytes))
-			p.fieldInBytes = []byte{}
+			if firstByteIsQuote && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 0 {
+				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
+				p.fieldInBytes = []byte{}
+			} else {
+				p.line = append(p.line, string(p.fieldInBytes))
+				p.fieldInBytes = []byte{}
+			}
 			return sliceToStr(p.line), err
 		}
 
-		if b[0] == byte(44) {
-			p.line = append(p.line, string(p.fieldInBytes))
-			p.fieldInBytes = []byte{}
-			continue
-		}
-
 		p.fieldInBytes = append(p.fieldInBytes, b[0])
+		p.previousByte = b[0]
+
+		if p.fieldInBytes[0] == '"' {
+			firstByteIsQuote = true
+		}
 	}
 }
 
@@ -57,7 +84,7 @@ func (p CSVStruct) GetField(n int) (string, error) {
 }
 
 func (p CSVStruct) GetNumberOfFields() int {
-	return 1
+	return len(p.line)
 }
 
 func sliceToStr(line []string) string {
@@ -77,4 +104,14 @@ func lineIsTerminated(b byte) bool {
 		return true
 	}
 	return false
+}
+
+func countQuotesInField(field []byte) int {
+	count := 0
+	for _, v := range field {
+		if v == '"' {
+			count++
+		}
+	}
+	return count
 }

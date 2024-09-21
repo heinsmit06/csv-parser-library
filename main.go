@@ -29,16 +29,13 @@ func main() {
 
 		fmt.Printf("Line %v: %v\n", lineCount, line)
 
-		if csvStruct, ok := csvparser.(*CSVStruct); ok {
-			for i, _ := range csvStruct.line {
-				field, err := csvparser.GetField(i)
-				if err != nil {
-					fmt.Println(err)
-					return
-				}
-
-				fmt.Printf("  Field %v: %v\n", i, field)
+		for i := 0; i < csvparser.GetNumberOfFields(); i++ {
+			field, err := csvparser.GetField(i)
+			if err != nil {
+				fmt.Println(err)
+				return
 			}
+			fmt.Printf("  Field %v: %v\n", i, field)
 		}
 
 		fmt.Println("  ---------------  ")

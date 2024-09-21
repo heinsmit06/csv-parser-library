@@ -1,5 +1,7 @@
-Name,Age,Occupation
-John Doe,28,Engineer
+"Jo"hn"" Doe",28,Engineer
+Na,"m","e",Age,Occupation
 Jane Doe,32,Designer, Haskell
-Sam Smith,24, "Developer"
-
+Sam Smith,24,"Developer"
+,
+check previous byte AND check 
+the number of quotes
