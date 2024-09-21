@@ -24,7 +24,7 @@ func main() {
 				break
 			}
 			fmt.Println("Error reading line:", err)
-			return
+			// return
 		}
 
 		fmt.Printf("Line %v: %v\n", lineCount, line)

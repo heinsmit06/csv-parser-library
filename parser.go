@@ -27,6 +27,7 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 	var err error
 	p.line = []string{}
 	firstByteIsQuote := false
+	// illegalLine := false
 
 	for {
 		_, err = r.Read(b)
@@ -42,6 +43,9 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 				p.fieldInBytes = []byte{}
 				firstByteIsQuote = false
 				continue
+			}
+			if b[0] == ',' && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 1 {
+				// illegalLine = true
 			}
 		} else {
 			if b[0] == ',' {
