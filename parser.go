@@ -52,11 +52,20 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 				illegalLine = true
 				continue
 			}
-			if (lineIsTerminated(b[0]) || err == io.EOF) && countQuotesInField(p.fieldInBytes)%2 == 1 {
-				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
-				p.fieldInBytes = []byte{}
-				firstByteIsQuote = false
-				illegalLine = true
+			if lineIsTerminated(b[0]) || err == io.EOF {
+				switch p.previousByte {
+				case '"':
+					if countQuotesInField(p.fieldInBytes)%2 == 1 {
+						p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
+						p.fieldInBytes = []byte{}
+						firstByteIsQuote = false
+						illegalLine = true
+					}
+				default:
+					if !lineIsTerminated(b[0]) || err != io.EOF {
+						return sliceToStr(p.line), err
+					}
+				}
 			}
 		} else {
 			if b[0] == ',' {
