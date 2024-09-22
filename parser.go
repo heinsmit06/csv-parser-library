@@ -27,12 +27,15 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 	var err error
 	p.line = []string{}
 	firstByteIsQuote := false
-	// illegalLine := false
+	illegalLine := false
 
 	for {
 		_, err = r.Read(b)
 		if err == io.EOF {
-			return "", io.EOF
+			if err == io.EOF {
+			}
+			p.line = append(p.line, string(p.fieldInBytes))
+			return sliceToStr(p.line), io.EOF
 		}
 
 		if firstByteIsQuote {
@@ -45,22 +48,34 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 				continue
 			}
 			if b[0] == ',' && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 1 {
-				// illegalLine = true
+				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
+				p.fieldInBytes = []byte{}
+				firstByteIsQuote = false
+				illegalLine = true
+				continue
 			}
 		} else {
 			if b[0] == ',' {
 				if countQuotesInField(p.fieldInBytes) > 0 {
 					p.fieldInBytes = []byte{}
-					return "", ErrQuote
+					illegalLine = true
+					continue
 				}
 				p.line = append(p.line, string(p.fieldInBytes))
 				p.fieldInBytes = []byte{}
 				continue
+			} else if lineIsTerminated(b[0]) && (countCommas(p.fieldInBytes) == 0) {
+				if countQuotesInField(p.fieldInBytes) > 0 {
+					illegalLine = true
+				}
 			}
 		}
 
 		if lineIsTerminated(b[0]) {
-			if firstByteIsQuote && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 0 {
+			if illegalLine {
+				p.fieldInBytes = []byte{}
+				return "", ErrQuote
+			} else if firstByteIsQuote && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 0 {
 				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
 				p.fieldInBytes = []byte{}
 			} else {
@@ -114,6 +129,16 @@ func countQuotesInField(field []byte) int {
 	count := 0
 	for _, v := range field {
 		if v == '"' {
+			count++
+		}
+	}
+	return count
+}
+
+func countCommas(field []byte) int {
+	count := 0
+	for _, v := range field {
+		if v == ',' {
 			count++
 		}
 	}
