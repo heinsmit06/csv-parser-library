@@ -52,6 +52,12 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 				illegalLine = true
 				continue
 			}
+			if (lineIsTerminated(b[0]) || err == io.EOF) && countQuotesInField(p.fieldInBytes)%2 == 1 {
+				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
+				p.fieldInBytes = []byte{}
+				firstByteIsQuote = false
+				illegalLine = true
+			}
 		} else {
 			if b[0] == ',' {
 				if countQuotesInField(p.fieldInBytes) > 0 {
@@ -106,6 +112,16 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 func (p CSVStruct) GetField(n int) (string, error) {
 	if n < 0 || n > len(p.line) {
 		return "", ErrFieldCount
+	}
+	stringWithoutDoubleQuotes := ""
+
+	for i := range p.line[n] {
+		if i < len(p.line[n])-1 {
+			if p.line[n][i] == '"' && p.line[n][i+1] == '"' {
+				stringWithoutDoubleQuotes = p.line[n][:i] + p.line[n][i+1:]
+				p.line[n] = stringWithoutDoubleQuotes
+			}
+		}
 	}
 
 	return p.line[n], nil
