@@ -3,3 +3,4 @@
 "asd", "has
 kell", bmw
 3. Need to write a converter to one quotation mark if there are even number of consecutive quotation marks
+4. Added handling of the cases when a field starts with a quotation mark and when it does not
