@@ -21,15 +21,18 @@ func main() {
 		line, err := csvparser.ReadLine(file)
 		if err != nil {
 			if err == io.EOF {
-				fmt.Printf("Line %v: %v\n", lineCount, line)
-				for i := 0; i < csvparser.GetNumberOfFields(); i++ {
-					field, err := csvparser.GetField(i)
-					if err != nil {
-						fmt.Println(err)
-						return
+				if line != "" {
+					fmt.Printf("Line %v: %v\n", lineCount, line)
+					for i := 0; i < csvparser.GetNumberOfFields(); i++ {
+						field, err := csvparser.GetField(i)
+						if err != nil {
+							fmt.Println(err)
+							return
+						}
+						fmt.Printf("  Field %v: %v\n", i, field)
 					}
-					fmt.Printf("  Field %v: %v\n", i, field)
 				}
+				fmt.Printf("\n%v\n\n", err)
 				break
 			}
 			fmt.Println("Error reading line:", err)

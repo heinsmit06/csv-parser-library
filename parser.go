@@ -28,14 +28,12 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 	p.line = []string{}
 	firstByteIsQuote := false
 	illegalLine := false
+	EOFflag := false
 
 	for {
 		_, err = r.Read(b)
 		if err == io.EOF {
-			if err == io.EOF {
-			}
-			p.line = append(p.line, string(p.fieldInBytes))
-			return sliceToStr(p.line), io.EOF
+			EOFflag = true
 		}
 
 		if firstByteIsQuote {
@@ -64,24 +62,35 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 				p.line = append(p.line, string(p.fieldInBytes))
 				p.fieldInBytes = []byte{}
 				continue
-			} else if lineIsTerminated(b[0]) && (countCommas(p.fieldInBytes) == 0) {
+			} else if lineIsTerminated(b[0]) || err == io.EOF {
 				if countQuotesInField(p.fieldInBytes) > 0 {
 					illegalLine = true
 				}
 			}
 		}
 
-		if lineIsTerminated(b[0]) {
+		if lineIsTerminated(b[0]) || EOFflag {
 			if illegalLine {
 				p.fieldInBytes = []byte{}
+				if EOFflag {
+					return "", ErrQuote
+				}
 				return "", ErrQuote
-			} else if firstByteIsQuote && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 0 {
+			}
+
+			if firstByteIsQuote && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 0 {
 				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
 				p.fieldInBytes = []byte{}
 			} else {
 				p.line = append(p.line, string(p.fieldInBytes))
 				p.fieldInBytes = []byte{}
 			}
+
+			// If EOF is true, return EOF after processing the line
+			if EOFflag {
+				return sliceToStr(p.line), io.EOF
+			}
+
 			return sliceToStr(p.line), err
 		}
 
