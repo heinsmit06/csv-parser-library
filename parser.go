@@ -14,6 +14,7 @@ type CSVParser interface {
 var (
 	ErrQuote      = errors.New("excess or missing \" in quoted-field")
 	ErrFieldCount = errors.New("wrong number of fields")
+	ErrFieldIndex = errors.New("wrong index")
 )
 
 type CSVStruct struct {
@@ -29,6 +30,7 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 	firstByteIsQuote := false
 	illegalLine := false
 	EOFflag := false
+	displayed := false
 
 	for {
 		_, err = r.Read(b)
@@ -91,6 +93,21 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 				return "", ErrQuote
 			}
 
+			if !displayed {
+				if EOFflag {
+					lastQuoteIdx := indexOfLastQuote(p.fieldInBytes)
+					if lastQuoteIdx >= 0 {
+						// Check if there are non-space characters after the last quote
+						for i := lastQuoteIdx + 1; i < len(p.fieldInBytes); i++ {
+							if p.fieldInBytes[i] != '"' {
+								displayed = true
+								return "", ErrQuote
+							}
+						}
+					}
+				}
+			}
+
 			if firstByteIsQuote && p.previousByte == '"' && countQuotesInField(p.fieldInBytes)%2 == 0 {
 				p.line = append(p.line, string(p.fieldInBytes[1:len(p.fieldInBytes)-1]))
 				p.fieldInBytes = []byte{}
@@ -117,6 +134,9 @@ func (p *CSVStruct) ReadLine(r io.Reader) (string, error) {
 }
 
 func (p CSVStruct) GetField(n int) (string, error) {
+	if n >= len(p.line) {
+		return "", ErrFieldIndex
+	}
 	if n < 0 || n > len(p.line) {
 		return "", ErrFieldCount
 	}
