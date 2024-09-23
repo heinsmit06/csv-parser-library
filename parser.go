@@ -176,3 +176,13 @@ func countCommas(field []byte) int {
 	}
 	return count
 }
+
+func indexOfLastQuote(field []byte) int {
+	idx := 0
+	for i, v := range field {
+		if v == '"' {
+			idx = i
+		}
+	}
+	return idx
+}
