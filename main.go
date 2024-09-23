@@ -23,6 +23,7 @@ func main() {
 			if err == io.EOF {
 				if line != "" {
 					fmt.Printf("Line %v: %v\n", lineCount, line)
+					fmt.Println(len(line))
 					for i := 0; i < csvparser.GetNumberOfFields(); i++ {
 						field, err := csvparser.GetField(i)
 						if err != nil {
